@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b6467">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="МАКС">
+  <meta name="description" content="Быстрый вход в веб-версию мессенджера МАКС">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>МАКС — вход в веб-версию</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(160deg, #0b6467 0%, #12888c 45%, #1fa3a8 100%);
+      background-attachment: fixed;
+      color: #ffffff;
+      display: table;
+      width: 100%;
+    }
+    .wrap { display: table-cell; vertical-align: middle; padding: 24px; }
+    .card {
+      max-width: 360px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.09);
+      border-radius: 18px;
+      padding: 28px 22px 24px;
+      text-align: center;
+      -webkit-box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    .logo {
+      width: 88px; height: 88px;
+      margin: 0 auto 16px;
+      border-radius: 22px;
+      background: #ffffff;
+      display: block;
+      line-height: 88px;
+      font-size: 42px;
+      font-weight: 700;
+      color: #0b6467;
+      -webkit-box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    }
+    h1 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+    p.sub { font-size: 14px; line-height: 1.5; opacity: 0.9; margin-bottom: 20px; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px 18px;
+      font-size: 17px;
+      font-weight: 600;
+      color: #0b6467;
+      background: #ffffff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      -webkit-transition: background 0.15s ease, opacity 0.15s ease;
+      transition: background 0.15s ease, opacity 0.15s ease;
+    }
+    .btn:active { background: #dff5f6; }
+    .btn.alt {
+      margin-top: 12px;
+      background: transparent;
+      color: #ffffff;
+      border: 1.5px solid rgba(255,255,255,0.5);
+    }
+    .btn.alt:active { background: rgba(255,255,255,0.15); }
+    .note { font-size: 12px; opacity: 0.75; margin-top: 18px; line-height: 1.45; }
+    .install-hint {
+      display: none;
+      margin-top: 16px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      background: rgba(0,0,0,0.22);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="logo">МАКС</div>
+      <h1>Мессенджер МАКС</h1>
+      <p class="sub" id="sub">Откройте веб-версию, чтобы читать чаты с этого устройства.</p>
+      <a class="btn" id="openBtn" href="https://web.max.ru" rel="noopener">Открыть веб-версию</a>
+      <button class="btn alt" id="installBtn" style="display:none;">Установить на главный экран</button>
+      <div class="install-hint" id="installHint">
+        В меню браузера (⋮) выберите «Добавить на главный экран» или «Установить приложение».
+      </div>
+      <p class="note">Вход по QR-коду: приложение МАКС → Настройки → Устройства → «Войти по QR-коду»</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var OPEN_URL = "https://web.max.ru";
+
+      function openWeb() {
+        try {
+          if (window.WebApp && window.WebApp.openLink) {
+            window.WebApp.openLink(OPEN_URL);
+            return;
+          }
+        } catch (e) { /* fall through */ }
+
+        var a = document.getElementById("openBtn");
+        a.setAttribute("href", OPEN_URL);
+        a.setAttribute("target", "_blank");
+        a.setAttribute("rel", "noopener");
+        window.location.href = OPEN_URL;
+      }
+
+      function isStandalone() {
+        return (window.matchMedia &&
+                window.matchMedia("(display-mode: standalone)").matches) ||
+               (window.navigator && window.navigator.standalone === true) ||
+               (window.location.href && window.location.href.indexOf("standalone") !== -1);
+      }
+
+      var btn = document.getElementById("openBtn");
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        openWeb();
+      });
+
+      /* Пакетная установка: браузер Android 5 Chrome умеет beforeinstallprompt */
+      var deferredPrompt = null;
+      window.addEventListener("beforeinstallprompt", function (ev) {
+        ev.preventDefault();
+        deferredPrompt = ev;
+        var ib = document.getElementById("installBtn");
+        ib.style.display = "block";
+        ib.addEventListener("click", function (ev2) {
+          ev2.preventDefault();
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt = null;
+          }
+          ib.style.display = "none";
+        });
+      });
+
+      if (isStandalone() || (window.WebApp && window.WebApp.initData)) {
+        document.getElementById("installBtn").style.display = "none";
+        document.getElementById("installHint").style.display = "none";
+      }
+    })();
+  </script>
+</body>
+</html>
